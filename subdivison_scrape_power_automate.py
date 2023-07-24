@@ -2,37 +2,21 @@ import requests
 from bs4 import BeautifulSoup
 import os
 import sys
-import spacy
 
-# Load the pre-trained language model
-nlp = spacy.load("en_core_web_sm")
+
+
 
 url = "https://plc.halifax.ca/hfxprod/pub/lms/Default.aspx?PossePresentation=ReferralResponse&PosseObjectId=25666994&AuthorizationKey=PFQYUFYGRECEFUCEFFYCNRRZAPNDDJDK"  # Replace with the actual URL
-#url = sys.argv[1]
+url = sys.argv[1]
 
 sudivision_path = r"C:\Users\premh\OneDrive - Province of Nova Scotia\Permit Docs\Subdivisons"
-#sudivision_path = sys.argv[2]
+sudivision_path = sys.argv[2]
 response = requests.get(url)
 soup = BeautifulSoup(response.text, "html.parser")
 
 
 
 file_links = {}
-
-def extract_entities(text):
-    # Process the input text using SpaCy
-    doc = nlp(text)
-    
-    # List to store the extracted entities
-    entities_dict = {"PERSON": [], "EMAIL": [], "PHONE": []}
-    
-   # Loop through the named entities recognized by SpaCy
-    for ent in doc.ents:
-        # Filter entities of specific types (PERSON, EMAIL, PHONE)
-        if ent.label_ in entities_dict:
-            entities_dict[ent.label_].append(ent.text)
-    
-    return entities_dict
 
 def metadata():
     referral_type = soup.find("span", id=lambda value: value and value.startswith("ReferralType")).text.strip()
@@ -48,7 +32,6 @@ def metadata():
     referral_description = soup.find("span", id=lambda value: value and value.startswith("ReferralDescription")).text.strip()
     # Remove newlines and carriage returns from the referral description
     referral_description = referral_description.replace('\r', '').replace('\n', '')
-    entities = extract_entities(referral_description)
     # Create a dictionary to store the scraped data
     scraped_data = {
         "ReferralType": referral_type,
@@ -60,9 +43,6 @@ def metadata():
         "Status": status,
         "RecipientList": recipient_list,
         "DateCompleted": date_completed,
-        "Department Contact":entities["PERSON"],
-        "Contact Phone":entities["PHONE"],
-        "Contact Email":entities["EMAIL"],
         "ReferralText": referral_text,
         "ReferralDescription": referral_description,
         "Link": url
