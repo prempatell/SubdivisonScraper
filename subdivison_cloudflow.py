@@ -9,8 +9,8 @@ import base64
 url = "https://plc.halifax.ca/hfxprod/pub/lms/Default.aspx?PossePresentation=ReferralResponse&PosseObjectId=25666994&AuthorizationKey=PFQYUFYGRECEFUCEFFYCNRRZAPNDDJDK"  # Replace with the actual URL
 url = sys.argv[1]
 
-sudivision_path = r"C:\Users\premh\OneDrive - Province of Nova Scotia\Permit Docs\Subdivisons"
-sudivision_path = sys.argv[2]
+# sudivision_path = r"C:\Users\premh\OneDrive - Province of Nova Scotia\Permit Docs\Subdivisons"
+# sudivision_path = sys.argv[2]
 response = requests.get(url)
 soup = BeautifulSoup(response.text, "html.parser")
 
@@ -47,8 +47,23 @@ def metadata():
         "ReferralDescription": referral_description,
         "Link": url
     }
-    
-    print( scraped_data)
+    pdf_data = []
+    for file_name, download_link in file_links.items():
+        response = requests.get(download_link)
+        if response.status_code == 200:
+            encoded_content = base64.b64encode(response.content).decode("utf-8")
+            pdf_data.append({
+                "filename": file_name,
+                "content": encoded_content
+            })
+
+    # Create the JSON object with both the scraped data and PDF data
+    response_data = {
+        "scraped_data": scraped_data,
+        "pdf_files": pdf_data
+    }
+
+    print(response_data)
 
 for link in soup.find_all("a"):
     href = link.get("href")
@@ -64,16 +79,16 @@ for link in soup.find_all("a"):
 #     # print("Download Link:", download_link)
 #     # print()
 
-# Downloading the PDF files
-for file_name, download_link in file_links.items():
-    response = requests.get(download_link)
-    if response.status_code == 200:
-        file_path = os.path.join(sudivision_path, file_name)
-        with open(file_path, "wb") as file:
-            file.write(response.content)
-        #print("Downloaded:", file_name)
-    else:
-        None
+# # Downloading the PDF files
+# for file_name, download_link in file_links.items():
+#     response = requests.get(download_link)
+#     if response.status_code == 200:
+#         file_path = os.path.join(sudivision_path, file_name)
+#         with open(file_path, "wb") as file:
+#             file.write(response.content)
+#         #print("Downloaded:", file_name)
+#     else:
+#         None
         #print("Failed to download:", file_name)
 
 # print("All files downloaded successfully.")
